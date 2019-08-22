@@ -1,10 +1,9 @@
 html
     head
-        title WebTube
+        script(src="https://kit.fontawesome.com/7ce1b73e9f.js")
+        title | #{siteName}
     body
-        header 
-            h1 WeTube
+        include ../partials/header
         main
             block content
-        footer
-            span &copy; WeTube
+        include ../partials/footer
