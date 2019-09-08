@@ -10,7 +10,7 @@ import {
   deleteVideo
 } from "../controllers/videoController";
 
-export const videoRouter = express.Router();
+const videoRouter = express.Router();
 
 videoRouter.get(routes.upload, onlyPrivate, getUpload);
 videoRouter.post(routes.upload, onlyPrivate, uploadVideo, postUpload);
