@@ -1,34 +1,17 @@
 import passport from "passport";
 import GithubStrategy from "passport-github";
+import FacebookStrategy from "passport-facebook";
 import User from "./models/User";
 import routes from "./routes";
+import {
+  githubLoginCallback,
+  facebookLoginCallback
+} from "./controllers/userController";
 
+//로컬 인증
 passport.use(User.createStrategy());
 
-const githubLoginCallback = async (_, __, profile, cb) => {
-  console.log(profile);
-  const {
-    _json: { id, avatar_url: avatarUrl, name, email }
-  } = profile;
-  try {
-    const user = await User.findOne({ email });
-    if (user) {
-      user.githubId = id;
-      user.save();
-      return cb(null, user);
-    }
-    const newUser = await User.create({
-      email,
-      name,
-      githubId: id,
-      avatarUrl
-    });
-    return cb(null, newUser);
-  } catch (error) {
-    return cb(error);
-  }
-};
-
+//깃허브 인증
 passport.use(
   new GithubStrategy(
     {
@@ -37,6 +20,20 @@ passport.use(
       callbackURL: `http://localhost:4000${routes.githubCallback}`
     },
     githubLoginCallback
+  )
+);
+
+//페이스북 인증
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FB_ID,
+      clientSecret: process.env.FB_SECRET,
+      callbackURL: `http://localhost:4000${routes.facebookCallback}`,
+      profileFields: ["id", "displayName", "photos", "email"],
+      scope: ["public_profile", "email"]
+    },
+    facebookLoginCallback
   )
 );
 
