@@ -1,5 +1,6 @@
 import routes from "../routes";
 import Video from "../models/Video";
+import Comment from "../models/Comment";
 
 export const home = async (req, res) => {
   try {
@@ -56,8 +57,9 @@ export const videoDetail = async (req, res) => {
     params: { id }
   } = req;
   try {
-    const video = await Video.findById(id).populate("creator");
-    console.log(video);
+    const video = await Video.findById(id)
+      .populate("creator")
+      .populate("comments");
     res.render("videoDetail", { pageTitle: video.title, video });
   } catch (error) {
     console.log(error);
@@ -71,8 +73,6 @@ export const getEditVideo = async (req, res) => {
   } = req;
   try {
     const video = await Video.findById(id);
-    // console.log("1>>>" + typeof req.user.id);
-    // console.log("2>>>" + typeof video.creator);
     if (video.creator.toString() !== req.user.id) {
       throw Error();
     }
@@ -115,11 +115,12 @@ export const deleteVideo = async (req, res) => {
   res.redirect(routes.home);
 };
 
-//don't rendering..
+// don't rendering..
 export const postRegisterView = async (req, res) => {
   const {
     params: { id }
   } = req;
+  console.log(id);
   try {
     const video = await Video.findById(id);
     video.views += 1;
@@ -128,6 +129,53 @@ export const postRegisterView = async (req, res) => {
   } catch (error) {
     res.status(400);
   } finally {
+    res.end();
+  }
+};
+
+// dd Comment
+
+export const postAddComment = async (req, res) => {
+  const {
+    params: { id: videoId },
+    body: { comment },
+    user
+  } = req;
+
+  try {
+    const video = await Video.findById(videoId);
+    const newComment = await Comment.create({
+      text: comment,
+      creator: user.id
+    });
+    video.comments.push(newComment.id);
+    video.save();
+    res.send({ commentCnt: video.comments.length, commentId: newComment.id });
+  } catch (error) {
+    res.status(400);
+    res.end();
+  }
+};
+
+export const postDeleteComment = async (req, res) => {
+  const {
+    params: { id: videoId },
+    body: { commentId }
+  } = req;
+
+  try {
+    const video = await Video.findById(videoId);
+    const commentIndex = video.comments.findIndex(element => {
+      return element.id === commentId;
+    });
+    await video.comments.splice(commentIndex, 1);
+    video.save();
+    await Comment.findByIdAndRemove(commentId);
+
+    res.status(200);
+    res.send({ commentCnt: video.comments.length });
+  } catch (error) {
+    res.status(400);
     res.end();
   }
 };
